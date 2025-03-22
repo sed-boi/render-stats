@@ -8,6 +8,7 @@ bl_info = {
                     "connections. The server provides a browser-friendly UI to monitor live render status. "
                     "Render statistics update dynamically via render handlers."),
     "warning": "",
+    "url": "https://www.sedboi.com",
     "category": "Render",
 }
 
