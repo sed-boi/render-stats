@@ -1,4 +1,3 @@
-# main.py
 import bpy
 import atexit
 import os
@@ -8,18 +7,21 @@ import socket
 import select
 import platform
 import subprocess
+from urllib.parse import urlparse, parse_qs
 
 from bpy.types import Panel, Operator
 
 # Import our custom modules
 from .server import lowlevel_nat  # NAT mapping module using miniupnpc
 from .stats import get_render_stats  # Returns current render stats (updated by our handlers)
-from .utils import get_access_key     # Returns an access key
+from .utils import get_access_key     # Returns a secure 16-character access key
 
+# Global variables
 server_started = False
 public_url = ""
 server_socket = None
 SERVER_PORT = 8080
+access_key = ""  # Global variable to hold the generated access key
 
 def update_render_progress_data():
     return get_render_stats()
@@ -89,13 +91,14 @@ def remove_firewall_rule(port):
         print("Unsupported OS for firewall automation.")
 
 def start_server_once():
-    global server_started, public_url, server_socket
+    global server_started, public_url, server_socket, access_key
     if server_started:
         print("Server already started.")
         return
 
     add_firewall_rule(SERVER_PORT)
 
+    # Attempt NAT mapping via UPnP
     ext_ip_buf = bytearray(64)
     ret = lowlevel_nat.SetupMapping(SERVER_PORT, ext_ip_buf, len(ext_ip_buf))
     if ret == 0:
@@ -114,6 +117,7 @@ def start_server_once():
     generate_qr_code(public_url, "session_id_dummy")
 
     try:
+        # Create an IPv6 socket for dual-stack operation
         server_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         try:
             server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -138,8 +142,8 @@ def process_requests():
         for s in ready:
             conn, addr = s.accept()
             handle_client(conn, addr)
-    except Exception:
-        pass
+    except Exception as e:
+        print("Error in process_requests:", e)
     return 0.1
 
 def handle_client(conn, addr):
@@ -155,6 +159,18 @@ def handle_client(conn, addr):
                 break
 
         request_line = request.split(b"\r\n")[0].decode('utf-8')
+        parsed_url = urlparse(request_line.split(" ")[1])
+        qs = parse_qs(parsed_url.query)
+        received_key = qs.get("key", [None])[0]
+        # Verify the access key
+        if received_key != access_key:
+            response = ("HTTP/1.1 403 Forbidden\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "Connection: close\r\n"
+                        "\r\nForbidden")
+            conn.sendall(response.encode('utf-8'))
+            return
+
         if request_line.startswith("GET /stats"):
             stats = update_render_progress_data()
             stats_json = json.dumps(stats)
@@ -168,7 +184,7 @@ def handle_client(conn, addr):
             ).encode('utf-8')
             conn.sendall(response_header + response_body)
         else:
-            # Serve the improved HTML UI with progress bar and log console.
+            # Serve the HTML UI with progress bar and log console.
             html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -240,7 +256,7 @@ def handle_client(conn, addr):
   </div>
   <script>
     function fetchStats() {{
-      fetch('/stats')
+      fetch('/stats?key={access_key}')
         .then(response => response.json())
         .then(data => {{
           document.getElementById('current_frame').textContent = data.current_frame;
@@ -248,14 +264,10 @@ def handle_client(conn, addr):
           document.getElementById('last_frame_time').textContent = data.last_frame_time;
           document.getElementById('total_expected_time').textContent = data.total_expected_time;
           document.getElementById('render_active').textContent = data.render_active ? "Yes" : "No";
-
-          // Update progress bar.
           let progress = data.progress_percentage || 0;
           let progressBar = document.getElementById('progressBar');
           progressBar.style.width = progress + '%';
           progressBar.textContent = progress.toFixed(2) + '%';
-
-          // Update log console.
           document.getElementById('logconsole').textContent = data.log;
         }})
         .catch(error => console.error('Error fetching stats:', error));

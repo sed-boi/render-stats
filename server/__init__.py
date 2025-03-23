@@ -1,8 +1,7 @@
-# server/__init__.py
 PORT = 8080
 
 def shutdown_server():
-    # Placeholder for any shutdown tasks.
+    # Placeholder for any shutdown tasks if needed.
     pass
 
 def handle_request_nonblocking():

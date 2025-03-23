@@ -1,4 +1,3 @@
-# server/lowlevel_nat.py
 try:
     import miniupnpc
 except ImportError:
