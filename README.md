@@ -24,6 +24,10 @@ This addon streamlines remote render monitoring by eliminating manual configurat
 - **Custom Logging:**  
   Implements a custom logging mechanism that aggregates messages from various parts of the render pipeline (asset loading, BVH generation, compositing, errors, etc.) into a log console.
 
+![demo](https://github.com/user-attachments/assets/d0cde59c-d85b-47a6-83b5-1cf97935bfe9)
+
+  
+
 ## Installation
 
 1. **Download and Install the Addon:**
@@ -75,6 +79,12 @@ A: A custom logging mechanism (built using Python’s logging module) aggregates
 
 **Q: Who is responsible for issues with this addon?**  
 A: This addon is an independent project and is not affiliated with the Blender Foundation. Any issues or errors are solely the responsibility of the addon.
+
+
+
+https://github.com/user-attachments/assets/0d52afff-f44f-484a-b0c4-2baa8ee4b501
+
+
 
 ## Contributing
 
