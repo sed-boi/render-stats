@@ -190,23 +190,41 @@ def handle_client(conn, addr):
 <head>
   <meta charset="UTF-8">
   <title>Render Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {{
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #000; /* Black background */
+      color: #fff; /* White text */
       margin: 0;
       padding: 20px;
     }}
     #container {{
       max-width: 600px;
+      width: 90%;
       margin: auto;
-      background: #fff;
+      background: #111;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(255,255,255,0.1);
     }}
     h1, h2 {{
       text-align: center;
+      margin: 0.5em 0;
+    }}
+    .header-banner a {{
+      text-decoration: none;
+      color: inherit;
+    }}
+    .header-banner {{
+      text-align: center;
+      margin-bottom: 20px;
+    }}
+    .header-banner img {{
+      width: 80px;
+      height: auto;
+      display: block;
+      margin: 10px auto 0;
     }}
     .stat {{
       margin: 10px 0;
@@ -214,7 +232,7 @@ def handle_client(conn, addr):
     }}
     #progressBarContainer {{
       width: 100%;
-      background-color: #ddd;
+      background-color: #333;
       border-radius: 5px;
       margin: 10px 0;
     }}
@@ -224,12 +242,12 @@ def handle_client(conn, addr):
       background-color: #4caf50;
       border-radius: 5px;
       text-align: center;
-      color: white;
+      color: #000;
       line-height: 20px;
       font-size: 0.9em;
     }}
     #logconsole {{
-      background: #e8e8e8;
+      background: #222;
       padding: 10px;
       border-radius: 4px;
       font-family: monospace;
@@ -237,12 +255,36 @@ def handle_client(conn, addr):
       margin: 10px 0;
       max-height: 200px;
       overflow-y: auto;
-      border: 1px solid #ccc;
+      border: 1px solid #444;
+    }}
+
+    /* Responsive adjustments */
+    @media screen and (max-width: 600px) {{
+      #container {{
+        padding: 15px;
+      }}
+      .stat {{
+        font-size: 1em;
+      }}
+      #progressBar {{
+        height: 18px;
+        line-height: 18px;
+        font-size: 0.8em;
+      }}
+      .header-banner img {{
+        width: 60px;
+      }}
     }}
   </style>
 </head>
 <body>
   <div id="container">
+    <div class="header-banner">
+      <a href="https://www.sedboi.com" target="_blank">
+        <h1>Made for creators by a creator</h1>
+        <img src="https://static.wixstatic.com/media/279b0c_aa034e8acd1e40ada17a82e7a6160c14~mv2.png" alt="Creator Logo">
+      </a>
+    </div>
     <h1>Render Status</h1>
     <div class="stat">Current Frame: <span id="current_frame"></span> / <span id="total_frames"></span></div>
     <div id="progressBarContainer">
@@ -278,6 +320,8 @@ def handle_client(conn, addr):
 </body>
 </html>
 """
+
+
             response_body = html_content.encode('utf-8')
             response_header = (
                 "HTTP/1.1 200 OK\r\n"
