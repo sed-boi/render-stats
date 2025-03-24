@@ -1,0 +1,2 @@
+Version: 1.10.0
+Arguments: ['C:\\Python312-x64\\Lib\\site-packages\\delvewheel\\__main__.py', 'repair', '--add-path', '.', '--include', 'miniupnpc.dll', 'dist/*.whl']
