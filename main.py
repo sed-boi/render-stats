@@ -1,18 +1,29 @@
 import bpy
 import atexit
 import os
+import sys
 import json
 import urllib.request
 import socket
 import select
 import platform
 import subprocess
+import shutil
 from urllib.parse import urlparse, parse_qs
+
+# Determine add-on directory and lib folder path
+addon_dir = os.path.dirname(__file__)
+lib_path = os.path.join(addon_dir, "lib")
+if not os.path.exists(lib_path):
+    os.makedirs(lib_path)
+if lib_path not in sys.path:
+    sys.path.insert(0, lib_path)
+    print("Added lib folder to sys.path:", lib_path)
 
 from bpy.types import Panel, Operator
 
 # Import our custom modules
-from .server import lowlevel_nat  # NAT mapping module using miniupnpc
+from .server import lowlevel_nat  # NAT mapping module using miniupnpc (from lib)
 from .stats import get_render_stats  # Returns current render stats (updated by our handlers)
 from .utils import get_access_key     # Returns a secure 16-character access key
 
@@ -54,13 +65,20 @@ def add_firewall_rule(port):
         except Exception as e:
             print("Failed to add firewall rule on Windows. Run Blender as Administrator.", e)
     elif system == "Linux":
+        cmd = ["sudo", "ufw", "allow", f"{port}/tcp"]
         try:
-            subprocess.check_call(["sudo", "ufw", "allow", f"{port}/tcp"])
+            subprocess.check_call(cmd)
             print("Firewall rule added using ufw on Linux.")
         except Exception as e:
             print("Failed to add firewall rule on Linux. Please add the rule manually.", e)
     elif system == "Darwin":
-        print("On macOS, please ensure Blender is allowed to accept incoming connections on port", port)
+        blender_executable = sys.executable
+        cmd = f"/usr/libexec/ApplicationFirewall/socketfilterfw --add \"{blender_executable}\""
+        try:
+            subprocess.check_call(["osascript", "-e", f'do shell script "{cmd}" with administrator privileges'])
+            print("Firewall rule added on macOS.")
+        except Exception as e:
+            print("Failed to add firewall rule on macOS:", e)
     else:
         print("Unsupported OS for firewall automation.")
 
@@ -80,13 +98,20 @@ def remove_firewall_rule(port):
         except Exception as e:
             print("Failed to remove firewall rule on Windows.", e)
     elif system == "Linux":
+        cmd = ["sudo", "ufw", "delete", "allow", f"{port}/tcp"]
         try:
-            subprocess.check_call(["sudo", "ufw", "delete", "allow", f"{port}/tcp"])
+            subprocess.check_call(cmd)
             print("Firewall rule removed using ufw on Linux.")
         except Exception as e:
             print("Failed to remove firewall rule on Linux.", e)
     elif system == "Darwin":
-        print("On macOS, please manually remove the firewall rule if needed.")
+        blender_executable = sys.executable
+        cmd = f"/usr/libexec/ApplicationFirewall/socketfilterfw --remove \"{blender_executable}\""
+        try:
+            subprocess.check_call(["osascript", "-e", f'do shell script "{cmd}" with administrator privileges'])
+            print("Firewall rule removed on macOS.")
+        except Exception as e:
+            print("Failed to remove firewall rule on macOS:", e)
     else:
         print("Unsupported OS for firewall automation.")
 
@@ -114,10 +139,9 @@ def start_server_once():
         public_url = f"http://{external_ip}:{SERVER_PORT}/?key={access_key}"
     print("Public URL:", public_url)
 
-    generate_qr_code(public_url, "session_id_dummy")
+    generate_qr_code(public_url)
 
     try:
-        # Create an IPv6 socket for dual-stack operation
         server_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         try:
             server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
@@ -162,7 +186,6 @@ def handle_client(conn, addr):
         parsed_url = urlparse(request_line.split(" ")[1])
         qs = parse_qs(parsed_url.query)
         received_key = qs.get("key", [None])[0]
-        # Verify the access key
         if received_key != access_key:
             response = ("HTTP/1.1 403 Forbidden\r\n"
                         "Content-Type: text/plain\r\n"
@@ -184,7 +207,6 @@ def handle_client(conn, addr):
             ).encode('utf-8')
             conn.sendall(response_header + response_body)
         else:
-            # Serve the HTML UI with progress bar and log console.
             html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -194,8 +216,8 @@ def handle_client(conn, addr):
   <style>
     body {{
       font-family: Arial, sans-serif;
-      background-color: #000; /* Black background */
-      color: #fff; /* White text */
+      background-color: #000;
+      color: #fff;
       margin: 0;
       padding: 20px;
     }}
@@ -257,8 +279,6 @@ def handle_client(conn, addr):
       overflow-y: auto;
       border: 1px solid #444;
     }}
-
-    /* Responsive adjustments */
     @media screen and (max-width: 600px) {{
       #container {{
         padding: 15px;
@@ -320,8 +340,6 @@ def handle_client(conn, addr):
 </body>
 </html>
 """
-
-
             response_body = html_content.encode('utf-8')
             response_header = (
                 "HTTP/1.1 200 OK\r\n"
@@ -353,47 +371,91 @@ def stop_server():
         print("Server is not running.")
 
 def check_and_install_dependencies():
-    import subprocess, sys
+    import subprocess, sys, os, shutil
+    addon_dir = os.path.dirname(__file__)
+    lib_path = os.path.join(addon_dir, "lib")
+    if lib_path not in sys.path:
+        sys.path.insert(0, lib_path)
+        print("Added lib folder to sys.path:", lib_path)
+
+    def install_package(package_name):
+        try:
+            print(f"Installing {package_name} into {lib_path} ...")
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", package_name, "--target", lib_path]
+            )
+            print(f"{package_name} installed successfully.")
+        except Exception as e:
+            print(f"Error installing {package_name}:", e)
+
     try:
         import qrcode
     except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "qrcode"])
+        install_package("qrcode")
+
     try:
         import miniupnpc
     except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "miniupnpc"])
+        install_package("miniupnpc")
 
-def generate_qr_code(url, session_id):
+    # Check for the PIL package (provided by Pillow)
+    pil_path_target = os.path.join(lib_path, "PIL")
+    if not os.path.exists(pil_path_target):
+        install_package("Pillow")
+        pil_path_root = os.path.join(addon_dir, "PIL")
+        if os.path.exists(pil_path_root):
+            try:
+                shutil.move(pil_path_root, pil_path_target)
+                print("Moved PIL folder from addon root to lib folder.")
+            except Exception as e:
+                print("Error moving PIL folder:", e)
+    else:
+        print("PIL package found in lib folder.")
+
+    print("Dependencies check complete.")
+
+def generate_qr_code(public_url):
     try:
         import qrcode
     except ImportError:
         print("qrcode module not available.")
         return
+    print("Generating QR code for URL:", public_url)
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=10,
         border=4,
     )
-    qr.add_data(url)
+    qr.add_data(public_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    temp_dir = bpy.app.tempdir
+    # Use a dedicated temp folder inside the add-on directory
+    temp_dir = os.path.join(addon_dir, "temp_qr")
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
     qr_image_path = os.path.join(temp_dir, "session_qr_code.png")
+    qr_image_path = os.path.normpath(qr_image_path)
     if os.path.exists(qr_image_path):
         os.remove(qr_image_path)
-    img.save(qr_image_path)
+    try:
+        img.save(qr_image_path)
+        print("QR code image saved to:", qr_image_path)
+    except Exception as e:
+        print("Error saving QR code image:", e)
+        return
     if "qr_code_image" in bpy.data.images:
         bpy.data.images.remove(bpy.data.images["qr_code_image"])
     try:
         qr_image = bpy.data.images.load(qr_image_path)
         bpy.context.scene.qr_code_image = qr_image
+        print("QR code generated and loaded successfully.")
     except Exception as e:
         print("Error loading QR image:", e)
 
 # --- UI Panel and Operators ---
 class RenderProgressPanel(Panel):
-    bl_idname = "FINALTEST_PT_render_progress"
+    bl_idname = "PT_render_progress"
     bl_label = "Render Status"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
