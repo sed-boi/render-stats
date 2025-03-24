@@ -2,12 +2,18 @@
 
 **Pre-release Version 1.0.0-beta**
 
-The Render Stats Addon for Blender creates a lightweight HTTP server that automatically maps your NAT via UPnP and supports IPv6/dual‑stack connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
+The Render Stats Addon for Blender creates a lightweight HTTP server that automatically maps your NAT via UPnP and supports IPv6 connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
 
 This addon streamlines remote render monitoring by eliminating manual configuration steps. Simply start the addon, and it automatically generates a unique public URL (with a QR code) that you can open on any browser to track your render progress in real time.
 
 > **Disclaimer:**  
 > This addon is an independent project and is not affiliated with, endorsed by, or representing the Blender Foundation. Any errors or issues encountered while using this addon are solely the responsibility of the addon, not Blender.
+
+## Limitations
+
+**IPv6 Only:**  
+Due to current limitations in some network environments (especially virtualized ones), the addon supports **only IPv6 connectivity**. The addon may generate an IPv4 public URL if no IPv6 connection is available; however, for full functionality—including NAT mapping and QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
+
 
 ## Important First-Time Setup
 
