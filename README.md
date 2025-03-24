@@ -70,7 +70,12 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
 
 ## Usage
 ```
-Note: Activate dependencies before Starting server, Start server before you start rendering to keep things smooth. The data is sent after frame completion, so if your single frame takes 10 minutes then the latest update will be sent in 10 minutes and so on. This might show a delay for first two frames, it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
+Note: Activate dependencies before Starting server,
+Start server before you start rendering to keep things smooth.
+The data is sent after frame completion,
+so if your single frame takes 10 minutes then the latest update will be sent in 10 minutes and so on.
+This might show a delay for first two frames,
+it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
 ```
 1. **Start the Server:**
    - In the 3D View sidebar under the **Render Status** tab, click **Start Server**.
