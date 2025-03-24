@@ -9,6 +9,7 @@ import select
 import platform
 import subprocess
 import shutil
+import time
 from urllib.parse import urlparse, parse_qs
 
 # Determine add-on directory and lib folder path
@@ -32,7 +33,8 @@ server_started = False
 public_url = ""
 server_socket = None
 SERVER_PORT = 8080
-access_key = ""  # Global variable to hold the generated access key
+access_key = ""
+dependencies_activated = False  # Set to True by Activate (Install Dependencies)
 
 def update_render_progress_data():
     return get_render_stats()
@@ -47,9 +49,33 @@ def get_public_ip():
         print("Error obtaining public IP:", e)
         return "::1"
 
+def try_enable_ipv6():
+    """Attempt to enable IPv6 automatically (only for Windows).
+       Returns True if IPv6 appears enabled after a delay, False otherwise.
+       Adjust commands and delay durations for your environment.
+    """
+    system = platform.system()
+    if system == "Windows":
+        try:
+            # Example: enable IPv6 on interface index 1 (adjust as necessary)
+            subprocess.check_call(["netsh", "interface", "ipv6", "set", "interface", "1", "enabled"])
+            print("IPv6 enabled on Windows.")
+            return True
+        except Exception as e:
+            print("Failed to enable IPv6 on Windows:", e)
+            return False
+    elif system == "Linux":
+        # Auto-enable is not attempted on Linux; user must enable IPv6 manually.
+        return False
+    elif system == "Darwin":
+        # Auto-enable is not attempted on macOS; user must enable IPv6 manually.
+        return False
+    else:
+        return False
+
 def add_firewall_rule(port):
     system = platform.system()
-    rule_name = "Blender Render Stats Addon"
+    rule_name = "Render Stats Addon"
     if system == "Windows":
         cmd = [
             "netsh", "advfirewall", "firewall", "add", "rule",
@@ -84,7 +110,7 @@ def add_firewall_rule(port):
 
 def remove_firewall_rule(port):
     system = platform.system()
-    rule_name = "Blender Render Stats Addon"
+    rule_name = "Render Stats Addon"
     if system == "Windows":
         cmd = [
             "netsh", "advfirewall", "firewall", "delete", "rule",
@@ -117,6 +143,9 @@ def remove_firewall_rule(port):
 
 def start_server_once():
     global server_started, public_url, server_socket, access_key
+    if not dependencies_activated:
+        print("Error: Dependencies not activated. Please click 'Activate (Install Dependencies)' first.")
+        return
     if server_started:
         print("Server already started.")
         return
@@ -125,18 +154,50 @@ def start_server_once():
 
     # Attempt NAT mapping via UPnP
     ext_ip_buf = bytearray(64)
-    ret = lowlevel_nat.SetupMapping(SERVER_PORT, ext_ip_buf, len(ext_ip_buf))
+    try:
+        ret = lowlevel_nat.SetupMapping(SERVER_PORT, ext_ip_buf, len(ext_ip_buf))
+    except Exception as e:
+        if str(e).strip() == "Success":
+            ret = 0
+            print("UPnP discovery returned 'Success' exception; treating as success.")
+        else:
+            print("Error during UPnP mapping:", e)
+            ret = -1
+
     if ret == 0:
         external_ip = ext_ip_buf.decode().strip('\x00')
     else:
         external_ip = get_public_ip()
         print("UPnP NAT mapping failed; falling back to public IP (port may not be forwarded).")
-    
+
+    # If IPv4 is detected, then:
+    if "." in external_ip:
+        if platform.system() == "Windows":
+            print("IPv4 detected on Windows. Attempting to enable IPv6 automatically...")
+            if try_enable_ipv6():
+                delay = 5
+                print(f"Waiting {delay} seconds for network settings to update...")
+                time.sleep(delay)
+                external_ip = get_public_ip()
+                print("Re-checked external IP:", external_ip)
+                if "." in external_ip:
+                    msg = ("Error: IPv6 still not available after attempting to enable it. "
+                           "Please manually enable IPv6 on your system or contact the author.")
+                    print(msg)
+                    return
+            else:
+                msg = ("Error: Unable to enable IPv6 automatically on Windows. "
+                       "Please manually enable IPv6 or contact the author.")
+                print(msg)
+                return
+        elif platform.system() in ("Linux", "Darwin"):
+            msg = ("Error: IPv6 connectivity is required. Please enable IPv6 on your system and network, "
+                   "or contact the author for assistance.")
+            print(msg)
+            return
+
     access_key = get_access_key()
-    if ":" in external_ip:
-        public_url = f"http://[{external_ip}]:{SERVER_PORT}/?key={access_key}"
-    else:
-        public_url = f"http://{external_ip}:{SERVER_PORT}/?key={access_key}"
+    public_url = f"http://[{external_ip}]:{SERVER_PORT}/?key={access_key}"
     print("Public URL:", public_url)
 
     generate_qr_code(public_url)
@@ -371,7 +432,8 @@ def stop_server():
         print("Server is not running.")
 
 def check_and_install_dependencies():
-    import subprocess, sys, os, shutil
+    import subprocess, sys, os, shutil, time
+    global dependencies_activated
     addon_dir = os.path.dirname(__file__)
     lib_path = os.path.join(addon_dir, "lib")
     if lib_path not in sys.path:
@@ -381,9 +443,7 @@ def check_and_install_dependencies():
     def install_package(package_name):
         try:
             print(f"Installing {package_name} into {lib_path} ...")
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", package_name, "--target", lib_path]
-            )
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package_name, "--target", lib_path])
             print(f"{package_name} installed successfully.")
         except Exception as e:
             print(f"Error installing {package_name}:", e)
@@ -412,7 +472,15 @@ def check_and_install_dependencies():
     else:
         print("PIL package found in lib folder.")
 
-    print("Dependencies check complete.")
+    # --- IPv6 Enablement on Linux as part of dependency activation ---
+    if platform.system() == "Linux":
+        external_ip = get_public_ip()
+        if "." in external_ip:
+            print("IPv4 detected during dependency activation on Linux. "
+                  "Auto-enable of IPv6 is not supported on Linux. "
+                  "Please manually enable IPv6 or contact the author.")
+    dependencies_activated = True
+    print("Dependencies check complete. All required dependencies are installed, and IPv6 is set (if available).")
 
 def generate_qr_code(public_url):
     try:
@@ -516,7 +584,7 @@ class InstallDependenciesOperator(Operator):
     bl_label = "Activate (Install Dependencies)"
     def execute(self, context):
         check_and_install_dependencies()
-        self.report({'INFO'}, "Dependencies installed.")
+        self.report({'INFO'}, "Dependencies installed and IPv6 enabled (if available).")
         return {'FINISHED'}
 
 classes = (
