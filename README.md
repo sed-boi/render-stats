@@ -9,12 +9,30 @@ This addon streamlines remote render monitoring by eliminating manual configurat
 > **Disclaimer:**  
 > This addon is an independent project and is not affiliated with, endorsed by, or representing the Blender Foundation. Any errors or issues encountered while using this addon are solely the responsibility of the addon, not Blender.
 
+## Important First-Time Setup
+
+**Before you Start Server, please click the "Activate (Install Dependencies)" button in the addon’s UI panel.**
+
+This step installs all required Python modules (such as `qrcode`, `Pillow` for the `PIL` package, and `miniupnpc`) into the addon’s vendor folder.  
+**Without this activation, you might encounter errors like:**
+ModuleNotFoundError: No module named 'qrcode'
+or
+ModuleNotFoundError: No module named 'PIL'
+  ```
+     ModuleNotFoundError: No module named 'qrcode'
+     
+     or
+     
+     ModuleNotFoundError: No module named 'PIL'
+     
+```
+
+These errors indicate that the addon’s dependencies have not been installed, and the QR code will not be generated. Please activate dependencies before running your project.
 
 ## Creator
 
-*Made for creators by a creator.*
-Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)  
-
+*Made for creators by a creator.*  
+Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 
 ## Features
 
@@ -45,12 +63,10 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
    - Click **Install...** and select the downloaded ZIP file or folder containing the addon.
    - Enable the addon by checking its box.
 
-2. **Install Required Python Modules:**
-   - Ensure that Blender’s Python environment has the required modules installed:
-     ```bash
-     pip install miniupnpc qrcode
-     ```
-   - Alternatively, click the **Activate (Install Dependencies)** button in the addon’s UI panel to install these automatically.
+2. **Initial Dependency Setup (First Use):**
+   - **Before using the addon for any render project, click the "Activate (Install Dependencies)" button in the addon’s UI panel.**
+   - This will automatically install required Python modules (`qrcode`, `Pillow`, `miniupnpc`) into the addon’s vendor folder.
+   - After activating dependencies, restart Blender if necessary.
 
 ## Usage
 
@@ -83,6 +99,18 @@ A: While the addon works on lower Blender versions, Blender 4.3+ is recommended 
 **Q: What if my firewall blocks the port?**  
 A: The addon attempts to add firewall rules automatically on Windows and Linux. On macOS, you may need to manually allow incoming connections on port 8080.
 
+**Q: Why am I seeing a "ModuleNotFoundError" related to dependencies?**  
+A: If you haven’t clicked the **Activate (Install Dependencies)** button before running the addon, required Python modules (like `qrcode` and `Pillow`) might not be installed, leading to errors such as:
+```
+     ModuleNotFoundError: No module named 'qrcode'
+     
+     or
+     
+     ModuleNotFoundError: No module named 'PIL'
+     
+```
+Please activate dependencies first.
+
 **Q: How does the addon capture and display render logs?**  
 A: A custom logging mechanism aggregates log messages (asset loading, BVH generation, compositing, errors, etc.) using Python’s logging module and displays them in a log console on the web UI.
 
@@ -96,3 +124,4 @@ Contributions, bug reports, and feature requests are welcome. Please open an iss
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
