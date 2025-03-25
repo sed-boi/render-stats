@@ -94,6 +94,8 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
 3. **Stop the Server:**
    - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall/NAT mappings.
 
+4. **Icon-Based Status Indicators:**
+   Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(✘,✔).
 
 >Note: Activate dependencies before Starting server,
 Start server before you start rendering to keep things smooth.
