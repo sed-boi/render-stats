@@ -14,16 +14,12 @@ This addon streamlines remote render monitoring by eliminating manual configurat
 **IPv6 Only:**  
 Due to current limitations in some network environments (especially virtualized ones), the addon supports **only IPv6 connectivity**. The addon may generate an IPv4 public URL if no IPv6 connection is available; however, for full functionality—including NAT mapping and QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
 
-
 ## Important First-Time Setup
 
 **Before you Start Server, please click the "Activate (Install Dependencies)" button in the addon’s UI panel.**
 
-This step installs all required Python modules (such as `qrcode`, `Pillow` for the `PIL` package, and `miniupnpc`) into the addon’s vendor folder.  
-**Without this activation, you might encounter errors like:**
-ModuleNotFoundError: No module named 'qrcode'
-or
-ModuleNotFoundError: No module named 'PIL'
+This step installs all required Python modules (such as `qrcode`, `Pillow` for the `PIL` package, and `miniupnpc`) into the addon’s vendor folder.
+**Without this activation, you might encounter errors like:** 
   ```
      ModuleNotFoundError: No module named 'qrcode'
      
@@ -32,8 +28,9 @@ ModuleNotFoundError: No module named 'PIL'
      ModuleNotFoundError: No module named 'PIL'
      
 ```
-
 These errors indicate that the addon’s dependencies have not been installed, and the QR code will not be generated. Please activate dependencies before running your project.
+
+**Important:** Please ensure you click the **"Enable IPv6"** button in the addon's UI panel every time before you click **"Start Server"**. This step ensures that the addon attempts to establish an IPv6 connection for the server.
 
 ## Creator
 
