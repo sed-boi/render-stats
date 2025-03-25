@@ -53,7 +53,7 @@ def get_dot(status, for_server=False):
             if client_connected:
                 return "CHECKMARK"  # Green tick when client is connected
             else:
-                return "CHECKMARK"  # Red tick (representing yellow wait) when waiting
+                return "CHECKMARK, CHECKMARK"  # Red tick (representing yellow wait) when waiting
         else:
             return "X"  # Red cross when stopped
     else:
