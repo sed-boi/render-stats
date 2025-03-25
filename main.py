@@ -43,17 +43,17 @@ client_connected = False
 start_server_error = ""
 
 # Color codes (not directly usable for label text color)
-GREEN = "✔"
-RED = "✘"
-YELLOW = "ᯤ"
+GREEN = "#00FF00"
+RED = "#FF0000"
+YELLOW = "#FFFF00"
 
 def get_dot(status, for_server=False):
     if for_server:
         if server_started:
             if client_connected:
-                return "CHECKMARK"  # Green tick when client is connected
+                return "✓↑↓"  # Green tick when client is connected
             else:
-                return "CHECKMARK"  # Red tick 
+                return "✓⏱"  # Red tick (representing yellow wait) when waiting
         else:
             return "X"  # Red cross when stopped
     else:
