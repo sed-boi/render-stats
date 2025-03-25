@@ -42,30 +42,20 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 
 ## Features
 
-- **Dynamic Render Statistics:**
-   Uses Blender’s render post handler to update live data after each rendered frame.
+- **Dynamic Render Statistics:**  
+  Uses Blender’s render post handler to update live data after each rendered frame.
 
-- **Browser-friendly UI:**
-   Serves an HTML page featuring a responsive progress bar, detailed log console, and live render statistics that refresh every second.
+- **Browser-friendly UI:**  
+  Serves an HTML page featuring a responsive progress bar, detailed log console, and live render statistics that refresh every second.
 
-- **NAT Mapping & IPv6 Support:**
-   Utilizes UPnP (via miniupnpc) to set up real port mappings for IPv6 connections so that your local HTTP server is exposed automatically without extra configuration.
+- **NAT Mapping & Dual‑Stack Support:**  
+  Utilizes UPnP (via miniupnpc) to set up real port mappings and creates an IPv6 socket (dual‑stack if available) so that your local HTTP server is exposed automatically without extra configuration.
 
-- **Automatic QR Code Generation:**
-   Generates a unique QR code from the public URL so that you can easily monitor render status on any device.
+- **Automatic QR Code Generation:**  
+  Generates a unique QR code from the public URL so that you can easily monitor render status on any device.
 
-- **Custom Logging:**
-   Implements a custom logging mechanism using Python’s logging module that aggregates messages (asset loading, BVH generation, compositing, errors, etc.) into a log console for real-time debugging.
-
-- **Icon-Based Status Indicators:**
-   Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons:
-   - **Tick (✔):** Indicates that Dependencies are activated, IPv6 is enabled, or the Server is running (either waiting for a connection or with a client connected). The color of the tick depends on your Blender theme (typically green or a similar positive color).
-   - **Cross (✘):** Indicates that Dependencies are not activated, IPv6 is not enabled, or the Server is stopped. The color of the cross depends on your Blender theme (typically red or a similar negative color).
-   - **Question Mark (?):** Indicates that the Server has started and is currently waiting for a client connection (representing the yellow part of the process). The color of the question mark depends on your Blender theme.
-
-- **Active Server Button:**
-   The **Stop Server** button will have a blue highlight when the server is running, visually indicating that the server is active.
-
+- **Custom Logging:**  
+  Implements a custom logging mechanism using Python’s logging module that aggregates messages (asset loading, BVH generation, compositing, errors, etc.) into a log console for real-time debugging.
 
 ## Evolution of the Addon
 
@@ -84,43 +74,42 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
    - This will automatically install required Python modules (`qrcode`, `Pillow`, `miniupnpc`) into the addon’s vendor folder.
    - After activating dependencies, restart Blender if necessary.
 
-
 ## Usage
 
 1. **Start the Server:**
    - In the 3D View sidebar under the **Render Status** tab, click **Start Server**.
    - The addon will automatically:
-       - Map your NAT via UPnP for IPv6.
-       - Create an IPv6 socket.
-       - Add necessary firewall rules (if required on your OS).
-       - Generate a unique public URL and QR code.
-   - The status of Dependencies, IPv6, and Server will be indicated by icons (tick, cross, question mark). The **Stop Server** button will turn blue when the server is running.
+     - Map your NAT via UPnP.
+     - Create an IPv6/dual‑stack socket.
+     - Add necessary firewall rules (if required on your OS).
+     - Generate a unique public URL and QR code.
 
 2. **Monitor Your Render:**
    - Open the generated URL in any web browser (or scan the QR code with your mobile device).
    - The webpage displays:
-       - A responsive progress bar indicating render progress.
-       - Live render statistics (current frame, total frames, last frame time, total expected time, etc.).
-       - A log console with detailed render pipeline messages.
+     - A responsive progress bar indicating render progress.
+     - Live render statistics (current frame, total frames, last frame time, total expected time, etc.).
+     - A log console with detailed render pipeline messages.
 
 3. **Stop the Server:**
    - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall/NAT mappings.
 
+4. **Icon-Based Status Indicators:**
+   Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(✘,✔).
 
->Note: Activate dependencies before Starting server.
+>Note: Activate dependencies before Starting server,
 Start server before you start rendering to keep things smooth.
 The data is sent after frame completion,
 so if your single frame takes 10 minutes then the latest update will be sent in 10 minutes and so on.
 This might show a delay for first two frames,
-it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.
+it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
 
 
+ 
 ![demo - frame at 0m34s](https://github.com/user-attachments/assets/ecf176ca-c7f5-4308-9423-33cf2e701d9f)
-*Note: The UI now uses icons to indicate status instead of colored text spans as shown in this image.*
+
 
 ![Untitled design](https://github.com/user-attachments/assets/d52cebd7-71e8-489f-b972-3bf19130fd19)
-
-
 
 
 ## FAQ
