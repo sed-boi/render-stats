@@ -103,6 +103,15 @@ This might show a delay for first two frames,
 it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
 
 
+
+![demo](https://github.com/user-attachments/assets/5d43ee51-cb66-42ee-acb7-37f7f639f0fb)
+
+
+https://github.com/user-attachments/assets/0908b8c5-95d3-44b3-a7de-21a7173af0fb
+
+
+
+
 ## FAQ
 
 **Q: Do I need to configure AWS or any external services?**  
