@@ -51,13 +51,13 @@ def get_dot(status, for_server=False):
     if for_server:
         if server_started:
             if client_connected:
-                return "✓↑↓"  # Green tick when client is connected
+                return "STRIP_COLOR_04"  # Green tick when client is connected
             else:
-                return "✓⏱"  # Red tick (representing yellow wait) when waiting
+                return "STRIP_COLOR_03"  # Red tick (representing yellow wait) when waiting
         else:
-            return "X"  # Red cross when stopped
+            return "STRIP_COLOR_01"  # Red cross when stopped
     else:
-        return "CHECKMARK" if status else "X" # Green tick if true, Red cross if false
+        return "STRIP_COLOR_04" if status else "STRIP_COLOR_01" # Green tick if true, Red cross if false
 
 def update_render_progress_data():
     return get_render_stats()
