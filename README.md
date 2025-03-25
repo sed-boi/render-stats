@@ -103,14 +103,11 @@ This might show a delay for first two frames,
 it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
 
 
-
-![demo](https://github.com/user-attachments/assets/5d43ee51-cb66-42ee-acb7-37f7f639f0fb)
-
-
-
-https://github.com/user-attachments/assets/6247fba0-8c9b-45dc-8f70-51c31f898ec9
+ 
+![demo - frame at 0m34s](https://github.com/user-attachments/assets/ecf176ca-c7f5-4308-9423-33cf2e701d9f)
 
 
+![Untitled design](https://github.com/user-attachments/assets/d52cebd7-71e8-489f-b972-3bf19130fd19)
 
 
 ## FAQ
