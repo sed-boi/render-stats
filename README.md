@@ -58,11 +58,8 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
    Implements a custom logging mechanism using Python’s logging module that aggregates messages (asset loading, BVH generation, compositing, errors, etc.) into a log console for real-time debugging.
 
 - **Icon-Based Status Indicators:**
-   Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons:
-   - **Tick (✔):** Indicates that Dependencies are activated, IPv6 is enabled, or the Server is running (either waiting for a connection or with a client connected). The color of the tick depends on your Blender theme (typically green or a similar positive color).
-   - **Cross (✘):** Indicates that Dependencies are not activated, IPv6 is not enabled, or the Server is stopped. The color of the cross depends on your Blender theme (typically red or a similar negative color).
-   - **Question Mark (?):** Indicates that the Server has started and is currently waiting for a client connection (representing the yellow part of the process). The color of the question mark depends on your Blender theme.
-
+   Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(✘,✔).
+  
 - **Active Server Button:**
    The **Stop Server** button will have a blue highlight when the server is running, visually indicating that the server is active.
 
