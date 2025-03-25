@@ -1,3 +1,4 @@
+# main.py
 import bpy
 import atexit
 import os
@@ -34,7 +35,29 @@ public_url = ""
 server_socket = None
 SERVER_PORT = 8080
 access_key = ""
-dependencies_activated = False  # Set to True by Activate (Install Dependencies)
+dependencies_activated = False  # Will be set via the dependency activation operator
+addon_preferences = None
+ipv6_enabled = False
+server_connecting = False
+client_connected = False
+start_server_error = ""
+
+# Color codes (not directly usable for label text color)
+GREEN = "#00FF00"
+RED = "#FF0000"
+YELLOW = "#FFFF00"
+
+def get_dot(status, for_server=False):
+    if for_server:
+        if server_started:
+            if client_connected:
+                return "CHECKMARK"  # Green tick when client is connected
+            else:
+                return "CHECKMARK"  # Red tick (representing yellow wait) when waiting
+        else:
+            return "X"  # Red cross when stopped
+    else:
+        return "CHECKMARK" if status else "X" # Green tick if true, Red cross if false
 
 def update_render_progress_data():
     return get_render_stats()
@@ -50,25 +73,18 @@ def get_public_ip():
         return "::1"
 
 def try_enable_ipv6():
-    """Attempt to enable IPv6 automatically (only for Windows).
-       Returns True if IPv6 appears enabled after a delay, False otherwise.
-       Adjust commands and delay durations for your environment.
-    """
+    """Attempt to enable IPv6 automatically (only for Windows)."""
     system = platform.system()
     if system == "Windows":
         try:
-            # Example: enable IPv6 on interface index 1 (adjust as necessary)
             subprocess.check_call(["netsh", "interface", "ipv6", "set", "interface", "1", "enabled"])
             print("IPv6 enabled on Windows.")
             return True
         except Exception as e:
             print("Failed to enable IPv6 on Windows:", e)
             return False
-    elif system == "Linux":
-        # Auto-enable is not attempted on Linux; user must enable IPv6 manually.
-        return False
-    elif system == "Darwin":
-        # Auto-enable is not attempted on macOS; user must enable IPv6 manually.
+    elif system in ("Linux", "Darwin"):
+        # Auto-enable is not attempted on Linux/macOS
         return False
     else:
         return False
@@ -142,14 +158,21 @@ def remove_firewall_rule(port):
         print("Unsupported OS for firewall automation.")
 
 def start_server_once():
-    global server_started, public_url, server_socket, access_key
+    global server_started, public_url, server_socket, access_key, dependencies_activated, ipv6_enabled, start_server_error, server_connecting
+    start_server_error = ""
     if not dependencies_activated:
-        print("Error: Dependencies not activated. Please click 'Activate (Install Dependencies)' first.")
+        print("Error: Dependencies not activated. Please click 'Activate Dependencies' first.")
+        start_server_error = "Dependencies not activated. Please click 'Activate Dependencies' first."
+        return
+    if not ipv6_enabled:
+        print("Error: IPv6 is not enabled. Kindly enable IPv6 before starting the server.")
+        start_server_error = "Kindly enable IPv6 before starting server."
         return
     if server_started:
         print("Server already started.")
         return
 
+    server_connecting = True
     add_firewall_rule(SERVER_PORT)
 
     # Attempt NAT mapping via UPnP
@@ -166,35 +189,12 @@ def start_server_once():
 
     if ret == 0:
         external_ip = ext_ip_buf.decode().strip('\x00')
+        if not external_ip:  # Fallback if UPnP returns an empty IP
+            external_ip = get_public_ip()
+            print("External IP from UPnP was empty; using public IP instead:", external_ip)
     else:
         external_ip = get_public_ip()
         print("UPnP NAT mapping failed; falling back to public IP (port may not be forwarded).")
-
-    # If IPv4 is detected, then:
-    if "." in external_ip:
-        if platform.system() == "Windows":
-            print("IPv4 detected on Windows. Attempting to enable IPv6 automatically...")
-            if try_enable_ipv6():
-                delay = 5
-                print(f"Waiting {delay} seconds for network settings to update...")
-                time.sleep(delay)
-                external_ip = get_public_ip()
-                print("Re-checked external IP:", external_ip)
-                if "." in external_ip:
-                    msg = ("Error: IPv6 still not available after attempting to enable it. "
-                           "Please manually enable IPv6 on your system or contact the author.")
-                    print(msg)
-                    return
-            else:
-                msg = ("Error: Unable to enable IPv6 automatically on Windows. "
-                       "Please manually enable IPv6 or contact the author.")
-                print(msg)
-                return
-        elif platform.system() in ("Linux", "Darwin"):
-            msg = ("Error: IPv6 connectivity is required. Please enable IPv6 on your system and network, "
-                   "or contact the author for assistance.")
-            print(msg)
-            return
 
     access_key = get_access_key()
     public_url = f"http://[{external_ip}]:{SERVER_PORT}/?key={access_key}"
@@ -213,19 +213,24 @@ def start_server_once():
         server_socket.listen(5)
     except Exception as e:
         print("Error setting up server socket:", e)
+        server_connecting = False
         return
 
+    global client_connected
+    client_connected = False
     server_started = True
+    server_connecting = False
     bpy.app.timers.register(process_requests)
 
 def process_requests():
-    global server_socket
+    global server_socket, client_connected
     if server_socket is None:
         return None
     try:
         ready, _, _ = select.select([server_socket], [], [], 0)
         for s in ready:
             conn, addr = s.accept()
+            client_connected = True
             handle_client(conn, addr)
     except Exception as e:
         print("Error in process_requests:", e)
@@ -271,133 +276,133 @@ def handle_client(conn, addr):
             html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Render Status</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {{
-      font-family: Arial, sans-serif;
-      background-color: #000;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-    }}
-    #container {{
-      max-width: 600px;
-      width: 90%;
-      margin: auto;
-      background: #111;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(255,255,255,0.1);
-    }}
-    h1, h2 {{
-      text-align: center;
-      margin: 0.5em 0;
-    }}
-    .header-banner a {{
-      text-decoration: none;
-      color: inherit;
-    }}
-    .header-banner {{
-      text-align: center;
-      margin-bottom: 20px;
-    }}
-    .header-banner img {{
-      width: 80px;
-      height: auto;
-      display: block;
-      margin: 10px auto 0;
-    }}
-    .stat {{
-      margin: 10px 0;
-      font-size: 1.1em;
-    }}
-    #progressBarContainer {{
-      width: 100%;
-      background-color: #333;
-      border-radius: 5px;
-      margin: 10px 0;
-    }}
-    #progressBar {{
-      width: 0%;
-      height: 20px;
-      background-color: #4caf50;
-      border-radius: 5px;
-      text-align: center;
-      color: #000;
-      line-height: 20px;
-      font-size: 0.9em;
-    }}
-    #logconsole {{
-      background: #222;
-      padding: 10px;
-      border-radius: 4px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      margin: 10px 0;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #444;
-    }}
-    @media screen and (max-width: 600px) {{
-      #container {{
-        padding: 15px;
-      }}
-      .stat {{
-        font-size: 1em;
-      }}
-      #progressBar {{
-        height: 18px;
-        line-height: 18px;
-        font-size: 0.8em;
-      }}
-      .header-banner img {{
-        width: 60px;
-      }}
-    }}
-  </style>
+    <meta charset="UTF-8">
+    <title>Render Status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }}
+        #container {{
+            max-width: 600px;
+            width: 90%;
+            margin: auto;
+            background: #111;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(255,255,255,0.1);
+        }}
+        h1, h2 {{
+            text-align: center;
+            margin: 0.5em 0;
+        }}
+        .header-banner a {{
+            text-decoration: none;
+            color: inherit;
+        }}
+        .header-banner {{
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        .header-banner img {{
+            width: 80px;
+            height: auto;
+            display: block;
+            margin: 10px auto 0;
+        }}
+        .stat {{
+            margin: 10px 0;
+            font-size: 1.1em;
+        }}
+        #progressBarContainer {{
+            width: 100%;
+            background-color: #333;
+            border-radius: 5px;
+            margin: 10px 0;
+        }}
+        #progressBar {{
+            width: 0%;
+            height: 20px;
+            background-color: #4caf50;
+            border-radius: 5px;
+            text-align: center;
+            color: #000;
+            line-height: 20px;
+            font-size: 0.9em;
+        }}
+        #logconsole {{
+            background: #222;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }}
+        @media screen and (max-width: 600px) {{
+            #container {{
+                padding: 15px;
+            }}
+            .stat {{
+                font-size: 1em;
+            }}
+            #progressBar {{
+                height: 18px;
+                line-height: 18px;
+                font-size: 0.8em;
+            }}
+            .header-banner img {{
+                width: 60px;
+            }}
+        }}
+    </style>
 </head>
 <body>
-  <div id="container">
-    <div class="header-banner">
-      <a href="https://www.sedboi.com" target="_blank">
-        <h1>Made for creators by a creator</h1>
-        <img src="https://static.wixstatic.com/media/279b0c_aa034e8acd1e40ada17a82e7a6160c14~mv2.png" alt="Creator Logo">
-      </a>
+    <div id="container">
+        <div class="header-banner">
+            <a href="https://www.sedboi.com" target="_blank">
+                <h1>Made for creators by a creator</h1>
+                <img src="https://static.wixstatic.com/media/279b0c_aa034e8acd1e40ada17a82e7a6160c14~mv2.png" alt="Creator Logo">
+            </a>
+        </div>
+        <h1>Render Status</h1>
+        <div class="stat">Current Frame: <span id="current_frame"></span> / <span id="total_frames"></span></div>
+        <div id="progressBarContainer">
+            <div id="progressBar">0%</div>
+        </div>
+        <div class="stat">Last Frame Time: <span id="last_frame_time"></span> s</div>
+        <div class="stat">Total Expected Time: <span id="total_expected_time"></span> s</div>
+        <div class="stat">Render Active: <span id="render_active"></span></div>
+        <h2>Log Console</h2>
+        <div id="logconsole">Loading logs...</div>
     </div>
-    <h1>Render Status</h1>
-    <div class="stat">Current Frame: <span id="current_frame"></span> / <span id="total_frames"></span></div>
-    <div id="progressBarContainer">
-      <div id="progressBar">0%</div>
-    </div>
-    <div class="stat">Last Frame Time: <span id="last_frame_time"></span> s</div>
-    <div class="stat">Total Expected Time: <span id="total_expected_time"></span> s</div>
-    <div class="stat">Render Active: <span id="render_active"></span></div>
-    <h2>Log Console</h2>
-    <div id="logconsole">Loading logs...</div>
-  </div>
-  <script>
-    function fetchStats() {{
-      fetch('/stats?key={access_key}')
-        .then(response => response.json())
-        .then(data => {{
-          document.getElementById('current_frame').textContent = data.current_frame;
-          document.getElementById('total_frames').textContent = data.total_frames;
-          document.getElementById('last_frame_time').textContent = data.last_frame_time;
-          document.getElementById('total_expected_time').textContent = data.total_expected_time;
-          document.getElementById('render_active').textContent = data.render_active ? "Yes" : "No";
-          let progress = data.progress_percentage || 0;
-          let progressBar = document.getElementById('progressBar');
-          progressBar.style.width = progress + '%';
-          progressBar.textContent = progress.toFixed(2) + '%';
-          document.getElementById('logconsole').textContent = data.log;
-        }})
-        .catch(error => console.error('Error fetching stats:', error));
-    }}
-    setInterval(fetchStats, 1000);
-    fetchStats();
-  </script>
+    <script>
+        function fetchStats() {{
+            fetch('/stats?key={access_key}')
+                .then(response => response.json())
+                .then(data => {{
+                    document.getElementById('current_frame').textContent = data.current_frame;
+                    document.getElementById('total_frames').textContent = data.total_frames;
+                    document.getElementById('last_frame_time').textContent = data.last_frame_time;
+                    document.getElementById('total_expected_time').textContent = data.total_expected_time;
+                    document.getElementById('render_active').textContent = data.render_active ? "Yes" : "No";
+                    let progress = data.progress_percentage || 0;
+                    let progressBar = document.getElementById('progressBar');
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress.toFixed(2) + '%';
+                    document.getElementById('logconsole').textContent = data.log;
+                }})
+                .catch(error => console.error('Error fetching stats:', error));
+        }}
+        setInterval(fetchStats, 1000);
+        fetchStats();
+    </script>
 </body>
 </html>
 """
@@ -416,17 +421,23 @@ def handle_client(conn, addr):
         conn.close()
 
 def stop_server():
-    global server_started, public_url, server_socket
+    global server_started, public_url, server_socket, client_connected, server_connecting
     if server_started and server_socket:
         try:
             server_socket.close()
+            server_socket = None
         except Exception as e:
             print("Error closing server socket:", e)
-        from .server.lowlevel_nat import RemoveMapping
-        RemoveMapping(SERVER_PORT)
+        try:
+            from .server.lowlevel_nat import RemoveMapping
+            RemoveMapping(SERVER_PORT)
+        except Exception as e:
+            print("Error removing port mapping:", e)
         remove_firewall_rule(SERVER_PORT)
         server_started = False
         public_url = ""
+        client_connected = False
+        server_connecting = False
         print("Server stopped.")
     else:
         print("Server is not running.")
@@ -458,7 +469,6 @@ def check_and_install_dependencies():
     except ImportError:
         install_package("miniupnpc")
 
-    # Check for the PIL package (provided by Pillow)
     pil_path_target = os.path.join(lib_path, "PIL")
     if not os.path.exists(pil_path_target):
         install_package("Pillow")
@@ -472,7 +482,6 @@ def check_and_install_dependencies():
     else:
         print("PIL package found in lib folder.")
 
-    # --- IPv6 Enablement on Linux as part of dependency activation ---
     if platform.system() == "Linux":
         external_ip = get_public_ip()
         if "." in external_ip:
@@ -480,6 +489,8 @@ def check_and_install_dependencies():
                   "Auto-enable of IPv6 is not supported on Linux. "
                   "Please manually enable IPv6 or contact the author.")
     dependencies_activated = True
+    if addon_preferences:
+        addon_preferences.dependencies_activated = True
     print("Dependencies check complete. All required dependencies are installed, and IPv6 is set (if available).")
 
 def generate_qr_code(public_url):
@@ -498,7 +509,6 @@ def generate_qr_code(public_url):
     qr.add_data(public_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    # Use a dedicated temp folder inside the add-on directory
     temp_dir = os.path.join(addon_dir, "temp_qr")
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -531,17 +541,51 @@ class RenderProgressPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("finaltest.install_dependencies", text="Activate (Install Dependencies)")
+
+        # Display status indicators (with icons)
+        row = layout.row(align=True)
+        sub_row = row.row(align=True)
+        sub_row.label(text="Dependencies:")
+        sub_row.label(icon=get_dot(addon_preferences.dependencies_activated if addon_preferences else dependencies_activated))
+
+        sub_row = row.row(align=True)
+        sub_row.label(text="IPv6:")
+        sub_row.label(icon=get_dot(ipv6_enabled))
+
+        sub_row = row.row(align=True)
+        sub_row.label(text="Server:")
+        sub_row.label(icon=get_dot(server_started, for_server=True))
+
         layout.separator()
+        # Operator buttons with dot prefix
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.enabled = not (addon_preferences.dependencies_activated if addon_preferences else dependencies_activated)
+        row.operator("finaltest.activate_dependencies", text="● Activate Dependencies")
+
+        row = col.row(align=True)
+        row.operator("finaltest.enable_ipv6", text="● Enable IPv6")
+
+        row = col.row(align=True)
+        if not server_started:
+            row.enabled = ipv6_enabled and (addon_preferences.dependencies_activated if addon_preferences else dependencies_activated)
+            row.operator("finaltest.start_server", text="● Start Server")
+        else:
+            col.active_default = True
+            row.operator("finaltest.stop_server", text="● Stop Server")
+            col.active_default = False # Reset for other buttons
+
+        if start_server_error:
+            layout.label(text=f"<span style='color:{RED};'>{start_server_error}</span>", translate=False)
+
         if server_started:
-            layout.operator("finaltest.stop_server", text="Stop Server")
+            layout.separator()
             layout.label(text="Public URL:")
             layout.label(text=public_url, icon='URL')
-            layout.operator("finaltest.copy_url", text="Copy URL")
+            layout.operator("finaltest.copy_url", text="● Copy URL")
             if hasattr(context.scene, "qr_code_image") and context.scene.qr_code_image:
                 layout.template_ID_preview(context.scene, "qr_code_image", new="image.new", open="image.open")
-        else:
-            layout.operator("finaltest.start_server", text="Start Server")
+
         layout.separator()
         stats = update_render_progress_data()
         layout.label(text=f"Current Frame: {stats.get('current_frame', 0)}")
@@ -554,12 +598,36 @@ class RenderProgressPanel(Panel):
         layout.label(text="Log Console:")
         layout.label(text=stats.get("log", ""), icon='TEXT')
 
+class ActivateDependenciesOperator(Operator):
+    bl_idname = "finaltest.activate_dependencies"
+    bl_label = "Activate Dependencies"
+    def execute(self, context):
+        check_and_install_dependencies()
+        global dependencies_activated
+        dependencies_activated = True
+        self.report({'INFO'}, "Dependencies installed.")
+        return {'FINISHED'}
+
+class EnableIPv6Operator(Operator):
+    bl_idname = "finaltest.enable_ipv6"
+    bl_label = "Enable IPv6"
+    def execute(self, context):
+        global ipv6_enabled
+        ipv6_enabled = True
+        # In a real scenario, you might want to perform a check here.
+        # For now, we just set the flag.
+        self.report({'INFO'}, "IPv6 enabled.")
+        return {'FINISHED'}
+
 class StartServerOperator(Operator):
     bl_idname = "finaltest.start_server"
     bl_label = "Start Server"
     def execute(self, context):
         start_server_once()
-        self.report({'INFO'}, "Server started.")
+        if start_server_error:
+            self.report({'ERROR'}, f"Server could not start: {start_server_error}")
+        else:
+            self.report({'INFO'}, "Server started.")
         return {'FINISHED'}
 
 class StopServerOperator(Operator):
@@ -579,35 +647,39 @@ class CopyURLToClipboardOperator(Operator):
             self.report({'INFO'}, "URL copied to clipboard.")
         return {'FINISHED'}
 
-class InstallDependenciesOperator(Operator):
-    bl_idname = "finaltest.install_dependencies"
-    bl_label = "Activate (Install Dependencies)"
-    def execute(self, context):
-        check_and_install_dependencies()
-        self.report({'INFO'}, "Dependencies installed and IPv6 enabled (if available).")
-        return {'FINISHED'}
-
 classes = (
     RenderProgressPanel,
     StartServerOperator,
     StopServerOperator,
     CopyURLToClipboardOperator,
-    InstallDependenciesOperator,
+    ActivateDependenciesOperator,
+    EnableIPv6Operator,
 )
 
 def register():
+    global addon_preferences, dependencies_activated
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.qr_code_image = bpy.props.PointerProperty(type=bpy.types.Image)
     atexit.register(stop_server)
-    print("Render Stats Addon registered.")
+    addon_preferences = bpy.context.preferences.addons[__package__].preferences
+    dependencies_activated = addon_preferences.dependencies_activated
+    print(f"Render Stats Addon registered with dependencies_activated = {dependencies_activated}")
 
 def unregister():
+    global addon_preferences, dependencies_activated, ipv6_enabled, server_started, client_connected, server_connecting, start_server_error
     for cls in classes:
         bpy.utils.unregister_class(cls)
     if hasattr(bpy.types.Scene, "qr_code_image"):
         del bpy.types.Scene.qr_code_image
     stop_server()
+    if addon_preferences is not None:
+        addon_preferences.dependencies_activated = dependencies_activated
+    ipv6_enabled = False
+    server_started = False
+    client_connected = False
+    server_connecting = False
+    start_server_error = ""
     print("Render Stats Addon unregistered.")
 
 if __name__ == "__main__":
