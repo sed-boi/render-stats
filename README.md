@@ -2,17 +2,18 @@
 
 **Pre-release Version 1.0.0-beta**
 
-The Render Stats Addon for Blender creates a lightweight HTTP server that automatically maps via UPnP and supports IPv6 connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
 
-This addon streamlines remote render monitoring by eliminating manual configuration steps. Simply start the addon, and it automatically generates a unique public URL (with a QR code) that you can open on any browser to track your render progress in real time.
+The Render Stats Addon for Blender creates a lightweight HTTP server that utilizes UPnP to facilitate IPv6 connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
+
 
 > **Disclaimer:**  
 > This addon is an independent project and is not affiliated with, endorsed by, or representing the Blender Foundation. Any errors or issues encountered while using this addon are solely the responsibility of the addon, not Blender.
 
 ## Limitations
 
-**IPv6 Only:**  
-Due to current limitations in some network environments (especially virtualized ones), the addon supports **only IPv6 connectivity**. The addon may generate an IPv4 public URL if no IPv6 connection is available; however, for full functionality—including QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
+**IPv6 Only:**
+The addon supports **only IPv6 connectivity**. For full functionality—including QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
+
 
 ## Important First-Time Setup
 
@@ -45,8 +46,9 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 - **Browser-friendly UI:**  
   Serves an HTML page featuring a responsive progress bar, detailed log console, and live render statistics that refresh every second.
 
-- ** UPnP  :**  
-  Utilizes UPnP (via miniupnpc) to set up real port mappings and creates an IPv6 socket so that your local HTTP server is exposed automatically without extra configuration.
+- **Automatic Network Configuration (IPv6):**
+  Utilizes UPnP (via miniupnpc) to potentially configure your network (e.g., firewall rules) to allow incoming IPv6 connections and creates an IPv6 socket so that your local HTTP server is exposed automatically without extra configuration.
+
 
 - **Automatic QR Code Generation:**  
   Generates a unique QR code from the public URL so that you can easily monitor render status on any device.
@@ -56,7 +58,7 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 
 ## Evolution of the Addon
 
-Originally, this addon was designed to work with AWS Lambda and S3 for remote monitoring of render progress. However, this approach required manual configuration and additional setup from users. After extensive testing, we transitioned to a more user-friendly method that leverages IPv6. This new approach requires zero manual configuration—your local Blender machine automatically exposes a secure HTTP channel using UPnP, and the render status is accessible via a unique public URL with an embedded access key.
+Originally, this addon was designed to work with AWS Lambda and S3 for remote monitoring of render progress. However, this approach required manual configuration and additional setup from users. After extensive testing, we transitioned to a more user-friendly method that leverages IPv6. This new approach aims for zero manual network configuration—your local Blender machine automatically exposes a secure HTTP channel using IPv6, potentially utilizing UPnP, and the render status is accessible via a unique public URL with an embedded access key.
 
 ## Installation
 
@@ -76,28 +78,30 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
 1. **Start the Server:**
    - In the 3D View sidebar under the **Render Status** tab, click **Start Server**.
    - The addon will automatically:
-     - Map your NAT via UPnP.
+     - Attempt to configure your network for IPv6 connections using UPnP.
      - Create an IPv6 socket.
      - Add necessary firewall rules (if required on your OS).
      - Generate a unique public URL and QR code.
 
+---
 2. **Monitor Your Render:**
    - Open the generated URL in any web browser (or scan the QR code with your mobile device).
    - The webpage displays:
      - A responsive progress bar indicating render progress.
      - Live render statistics (current frame, total frames, last frame time, total expected time, etc.).
      - A log console with detailed render pipeline messages.
-
+---
 3. **Stop the Server:**
    - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall/NAT mappings.
-
+---
 4. **Icon-Based Status Indicators:**
    Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(🟥,🟨,🟩).
    **Represents:**
    - Dependencies : 🟥(Dependencies not installed), 🟩(Dependencies Installed).
    - Ipv6: 🟥(Ipv6 Not ready to use), 🟩(Ipv6 Ready to use).
    - Server: 🟥(Server OFF), 🟨(Server is ON and waiting for connection), 🟩(Server is ON and User is Connected).
-
+---
+---
 >Note: Activate dependencies before Starting server,
 Start server before you start rendering to keep things smooth.
 The data is sent after frame completion,
@@ -112,11 +116,13 @@ it is advised to wait for at least 2 frames to get rendered, in order to confirm
 
 ## FAQ
 
-**Q: Do I need to configure AWS or any external services?**  
-A: No. We initially explored an AWS-based solution, but switched to using IPv6 and dual‑stack NAT mapping for a completely zero‑user configuration.
+
+**Q: Do I need to configure any external services?**
+**A:** No. We initially explored an AWS-based solution, but switched to using IPv6 for a completely zero‑user network configuration.
 
 **Q: Which Blender versions are supported?**  
 A: While the addon works on lower Blender versions, Blender 4.3+ is recommended for optimal performance and full feature support.
+
 
 **Q: What if my firewall blocks the port?**  
 A: The addon attempts to add firewall rules automatically on Windows and Linux. On macOS, you may need to manually allow incoming connections on port 8080.
