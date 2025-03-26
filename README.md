@@ -83,25 +83,24 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
      - Add necessary firewall rules (if required on your OS).
      - Generate a unique public URL and QR code.
 
----
 2. **Monitor Your Render:**
    - Open the generated URL in any web browser (or scan the QR code with your mobile device).
    - The webpage displays:
      - A responsive progress bar indicating render progress.
      - Live render statistics (current frame, total frames, last frame time, total expected time, etc.).
      - A log console with detailed render pipeline messages.
----
+ 
 3. **Stop the Server:**
    - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall mappings.
----
+ 
 4. **Icon-Based Status Indicators:**
    Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(🟥,🟨,🟩).
    **Represents:**
    - Dependencies : 🟥(Dependencies not installed), 🟩(Dependencies Installed).
    - Ipv6: 🟥(Ipv6 Not ready to use), 🟩(Ipv6 Ready to use).
    - Server: 🟥(Server OFF), 🟨(Server is ON and waiting for connection), 🟩(Server is ON and User is Connected).
----
----
+ 
+
 >Note: Activate dependencies before Starting server,
 Start server before you start rendering to keep things smooth.
 The data is sent after frame completion,
@@ -111,7 +110,7 @@ it is advised to wait for at least 2 frames to get rendered, in order to confirm
 
 ![Untitled design (1)](https://github.com/user-attachments/assets/a60c55e9-a77f-4a5f-bc08-1a52b3eb798c)
 
- 
+ ---
  
 
 ## FAQ
