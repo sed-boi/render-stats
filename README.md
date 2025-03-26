@@ -2,7 +2,7 @@
 
 **Pre-release Version 1.0.0-beta**
 
-The Render Stats Addon for Blender creates a lightweight HTTP server that automatically maps your NAT via UPnP and supports IPv6 connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
+The Render Stats Addon for Blender creates a lightweight HTTP server that automatically maps via UPnP and supports IPv6 connections. It serves a browser-friendly UI that displays live render statistics—including current frame, total frames, progress, and frame timing—via a progress bar and a log console that aggregates messages from your render pipeline.
 
 This addon streamlines remote render monitoring by eliminating manual configuration steps. Simply start the addon, and it automatically generates a unique public URL (with a QR code) that you can open on any browser to track your render progress in real time.
 
@@ -12,7 +12,7 @@ This addon streamlines remote render monitoring by eliminating manual configurat
 ## Limitations
 
 **IPv6 Only:**  
-Due to current limitations in some network environments (especially virtualized ones), the addon supports **only IPv6 connectivity**. The addon may generate an IPv4 public URL if no IPv6 connection is available; however, for full functionality—including NAT mapping and QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
+Due to current limitations in some network environments (especially virtualized ones), the addon supports **only IPv6 connectivity**. The addon may generate an IPv4 public URL if no IPv6 connection is available; however, for full functionality—including QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
 
 ## Important First-Time Setup
 
@@ -45,7 +45,7 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 - **Browser-friendly UI:**  
   Serves an HTML page featuring a responsive progress bar, detailed log console, and live render statistics that refresh every second.
 
-- **NAT Mapping & UPnP  :**  
+- ** UPnP  :**  
   Utilizes UPnP (via miniupnpc) to set up real port mappings and creates an IPv6 socket so that your local HTTP server is exposed automatically without extra configuration.
 
 - **Automatic QR Code Generation:**  
