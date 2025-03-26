@@ -11,9 +11,9 @@ The Render Stats Addon for Blender creates a lightweight HTTP server that utiliz
 
 ## Limitations
 
+
 **IPv6 Only:**
 The addon supports **only IPv6 connectivity**. For full functionality—including QR code generation—the network must support IPv6. Please ensure your environment (router/ISP) provides IPv6 connectivity. Dual‑stack (IPv4/IPv6) support is not available in this version.
-
 
 ## Important First-Time Setup
 
@@ -92,7 +92,7 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
      - A log console with detailed render pipeline messages.
 ---
 3. **Stop the Server:**
-   - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall/NAT mappings.
+   - When finished, click **Stop Server** in the addon’s UI panel to shut down the HTTP server and remove any firewall mappings.
 ---
 4. **Icon-Based Status Indicators:**
    Displays the status of Dependencies, IPv6, and the Server using Blender's built-in icons(🟥,🟨,🟩).
