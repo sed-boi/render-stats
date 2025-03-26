@@ -45,8 +45,8 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 - **Browser-friendly UI:**  
   Serves an HTML page featuring a responsive progress bar, detailed log console, and live render statistics that refresh every second.
 
-- **NAT Mapping & Dual‑Stack Support:**  
-  Utilizes UPnP (via miniupnpc) to set up real port mappings and creates an IPv6 socket (dual‑stack if available) so that your local HTTP server is exposed automatically without extra configuration.
+- **NAT Mapping & UPnP  :**  
+  Utilizes UPnP (via miniupnpc) to set up real port mappings and creates an IPv6 socket so that your local HTTP server is exposed automatically without extra configuration.
 
 - **Automatic QR Code Generation:**  
   Generates a unique QR code from the public URL so that you can easily monitor render status on any device.
@@ -56,7 +56,7 @@ Developed by **Vishal Chaudhary** – [sedboi.com](https://www.sedboi.com)
 
 ## Evolution of the Addon
 
-Originally, this addon was designed to work with AWS Lambda and S3 for remote monitoring of render progress. However, this approach required manual configuration and additional setup from users. After extensive testing, we transitioned to a more user-friendly method that leverages IPv6 and dual‑stack NAT mapping. This new approach requires zero manual configuration—your local Blender machine automatically exposes a secure HTTP channel using UPnP, and the render status is accessible via a unique public URL with an embedded access key.
+Originally, this addon was designed to work with AWS Lambda and S3 for remote monitoring of render progress. However, this approach required manual configuration and additional setup from users. After extensive testing, we transitioned to a more user-friendly method that leverages IPv6. This new approach requires zero manual configuration—your local Blender machine automatically exposes a secure HTTP channel using UPnP, and the render status is accessible via a unique public URL with an embedded access key.
 
 ## Installation
 
