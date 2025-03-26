@@ -77,7 +77,7 @@ Originally, this addon was designed to work with AWS Lambda and S3 for remote mo
    - In the 3D View sidebar under the **Render Status** tab, click **Start Server**.
    - The addon will automatically:
      - Map your NAT via UPnP.
-     - Create an IPv6/dual‑stack socket.
+     - Create an IPv6 socket.
      - Add necessary firewall rules (if required on your OS).
      - Generate a unique public URL and QR code.
 
