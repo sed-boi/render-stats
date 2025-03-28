@@ -108,7 +108,7 @@ so if your single frame takes 10 minutes then the latest update will be sent in 
 This might show a delay for first two frames,
 it is advised to wait for at least 2 frames to get rendered, in order to confirm the data sent is accurate.  
 
-![Untitled design (1)](https://github.com/user-attachments/assets/a60c55e9-a77f-4a5f-bc08-1a52b3eb798c)
+![demo](https://github.com/user-attachments/assets/7df6b38b-6c1b-4f1b-bc3d-b160b1365ebc)
 
  ---
  
