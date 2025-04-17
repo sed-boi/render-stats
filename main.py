@@ -614,7 +614,7 @@ class EnableIPv6Operator(Operator):
     def execute(self, context):
         global ipv6_enabled
         ipv6_enabled = True
-        # In a real scenario, you might want to perform a check here.
+        #  perform a check here.
         # For now, we just set the flag.
         self.report({'INFO'}, "IPv6 enabled.")
         return {'FINISHED'}
