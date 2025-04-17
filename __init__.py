@@ -18,7 +18,7 @@ from .main import register as main_register, unregister as main_unregister
 from .stats import update_render_stats_handler, clear_render_log
 
 class RenderStatsPreferences(AddonPreferences):
-    bl_idname = __name__  # Must match your addon's package name
+    bl_idname = __name__  # Must match addon's package name
 
     dependencies_activated: bpy.props.BoolProperty(
         name="Dependencies Activated",
