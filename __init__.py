@@ -3,7 +3,7 @@ bl_info = {
     "name": "Render-Stats",
     "author": "Vishal Chaudhary",
     "version": (1, 0, 0),
-    "blender": (4, 4, 0),
+    "blender": (2, 8, 0),
     "location": "View3D > Sidebar > Render Status",
     "description": ("Starts an HTTP server that maps your NAT via UPnP and supports IPv6"
                     "connections. The server provides a browser-friendly UI to monitor live render status. "
