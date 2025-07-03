@@ -148,7 +148,7 @@ A: This addon is an independent project and is not affiliated with the Blender F
 
 ## Contributing
 
-Contributions, bug reports, and feature requests are welcome. Please open an issue or submit a pull request with your changes. When contributing, ensure that your modifications are well documented and follow the project’s coding style.
+Contributions, bug reports, and feature requests are welcome. Please open an issue or submit a pull request with your changes. When contributing, ensure that your modifications are well documented and follow the project’s coding style. Blender Render Stats
 
 ## License
 
